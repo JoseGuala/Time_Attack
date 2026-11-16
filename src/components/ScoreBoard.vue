@@ -9,6 +9,12 @@ const millorMarca = computed(() => {
   if (store.partides.length === 0) return null
   return Math.min(...store.partides.map((p) => p.errorTotal))
 })
+
+// Classificació global ordenada de menor a major error.
+// Fem una còpia amb [...] per no modificar directament les dades de Pinia.
+const classificacioOrdenada = computed(() =>
+  [...store.classificacio].sort((a, b) => a.errorTotal - b.errorTotal),
+)
 </script>
 
 <template>
@@ -42,6 +48,34 @@ const millorMarca = computed(() => {
 
       <button @click="store.esborrarPartides()">Esborrar historial</button>
     </template>
+
+    <h2>CLASSIFICACIÓ GLOBAL</h2>
+
+    <p v-if="store.classificacio.length === 0" class="buit">
+      Encara no hi ha resultats. Sigues el primer a jugar!
+    </p>
+
+    <table v-else>
+      <thead>
+        <tr>
+          <th>Posició</th>
+          <th>Jugador</th>
+          <th>Error total</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr
+          v-for="(resultat, index) in classificacioOrdenada"
+          :key="index"
+          :class="{ millor: index === 0 }"
+        >
+          <td>{{ index + 1 }}</td>
+          <td>{{ resultat.nom }}</td>
+          <td>{{ resultat.errorTotal }} s</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -52,5 +86,10 @@ const millorMarca = computed(() => {
 
 .buit {
   color: var(--muted);
+}
+
+tr.millor td {
+  background: #fff3bf;
+  font-weight: 700;
 }
 </style>

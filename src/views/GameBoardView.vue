@@ -4,6 +4,7 @@ import KeyPad from '@/components/KeyPad.vue'
 import ResultsTable from '@/components/ResultsTable.vue'
 import ScoreBoard from '@/components/ScoreBoard.vue'
 import { useGameStore } from '@/stores/game'
+import { socket } from '@/services/socket'
 
 const store = useGameStore()
 
@@ -65,15 +66,20 @@ function rebreTecla(tecla) {
   if (resultats.value.length === tecles.length) {
     jugant.value = false
 
-    let errorTotal = 0
+    // Calculem l'error total (en valor absolut: un error negatiu no compensa un de positiu,
+    // i el servidor rebutja valors negatius)
+    const errorTotal = resultats.value.reduce((total, r) => total + Math.abs(r.error), 0)
 
-    for (let index = 0; index < resultats.value.length; index++) {
-      const element = resultats.value[index]
+    const errorFinal = Number(errorTotal.toFixed(2))
 
-      errorTotal = errorTotal + Math.abs(element.error)
-    }
+    // Guardem la partida al nostre Pinia
+    store.guardarPartida(errorFinal)
 
-    store.guardarPartida(Number(errorTotal.toFixed(2)))
+    // Enviem el resultat al servidor
+    socket.emit('resultat', {
+      nom: store.nomJugador,
+      errorTotal: errorFinal,
+    })
   }
 }
 
@@ -92,12 +98,33 @@ function teclaFisica(event) {
   }
 }
 
+// Socket.IO
+function connectat() {
+  console.log('Connectat al servidor!', socket.id)
+}
+
+function rebreClassificacio(dades) {
+  console.log('Classificació rebuda:', dades)
+
+  store.actualitzarClassificacio(dades)
+}
+
 onMounted(() => {
   window.addEventListener('keydown', teclaFisica)
+
+  socket.on('connect', connectat)
+  socket.on('classificacio', rebreClassificacio)
+
+  socket.connect()
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', teclaFisica)
+
+  socket.off('connect', connectat)
+  socket.off('classificacio', rebreClassificacio)
+
+  socket.disconnect()
 })
 </script>
 

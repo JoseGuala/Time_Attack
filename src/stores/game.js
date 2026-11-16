@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 export const useGameStore = defineStore('game', () => {
   const nomJugador = ref('')
   const partides = ref([])
+  const classificacio = ref([])
 
   function guardarNom(nom) {
     nomJugador.value = nom
@@ -23,11 +24,18 @@ export const useGameStore = defineStore('game', () => {
     partides.value = []
   }
 
+  // Rep la classificació global que envia el servidor
+  function actualitzarClassificacio(dades) {
+    classificacio.value = dades
+  }
+
   return {
     nomJugador,
     partides,
+    classificacio,
     guardarNom,
     guardarPartida,
     esborrarPartides,
+    actualitzarClassificacio,
   }
 })
